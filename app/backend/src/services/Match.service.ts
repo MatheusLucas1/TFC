@@ -68,7 +68,11 @@ export default class MatchService {
 
   async update(id: number, body: MatchUpdate): Promise<IMatch | null> {
     const match = await this.matchModel.getById(id);
-    return this.matchModel.update({ ...match!, ...body });
+    if (!match) {
+      return null; // Handle the case when the match is not found
+    }
+    const updatedMatch = { ...match, ...body };
+    return this.matchModel.update(updatedMatch);
   }
 
   async create(body: MatchCreate): Promise<IMatch> {

@@ -28,7 +28,15 @@ export default class LoginController {
 
   static role(req: Request, resp: Response) {
     const token = req.headers.authorization;
-    const user = jwtAuth.verifyToken(token!);
-    return resp.status(200).json({ role: user!.role });
+    if (!token) {
+      // Handle the case when the token is not present
+      return resp.status(401).json({ error: 'Unauthorized' });
+    }
+    const user = jwtAuth.verifyToken(token);
+    if (!user) {
+      // Handle the case when the token is invalid or expired
+      return resp.status(401).json({ error: 'Invalid token' });
+    }
+    return resp.status(200).json({ role: user.role });
   }
 }
