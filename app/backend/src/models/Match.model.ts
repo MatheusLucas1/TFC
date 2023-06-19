@@ -1,72 +1,40 @@
-import MatchesModel from '../database/models/MatchesModel';
 import IMatches from '../Interfaces/matches/IMatches';
-import { IMatchesModel } from '../Interfaces/matches/IMatchesModel';
-import TeamModel from '../database/models/TeamsModel';
-import { NewEntity } from '../Interfaces';
-import ILeaderboard from '../Interfaces/matches/ILeaderboard';
-import leaderboardQuery from '../utils/LeaderboardHandle';
+import SequelizeMatch from '../database/models/MatchesModel';
 
-export default class MatchModel implements IMatchesModel {
-  private model = MatchesModel;
-  private teamsmodel = TeamModel;
+type MatchCreate = {
+  homeTeamGoals: number;
+  awayTeamGoals: number;
+  homeTeamId: number;
+  awayTeamId: number;
+};
 
-  async findAll(): Promise<IMatches[]> {
-    const dbData = await this.model.findAll();
-    const teamsData = await this.teamsmodel.findAll();
+export default class MatchModel {
+  private model = SequelizeMatch;
 
-    return dbData
-      .map(({ id, homeTeamId, homeTeamGoals, awayTeamId, awayTeamGoals, inProgress }) => {
-        const homeTeam = teamsData.find((team) => team.id === homeTeamId);
-        const awayTeam = teamsData.find((team) => team.id === awayTeamId);
-
-        return {
-          id,
-          homeTeamId,
-          homeTeamGoals,
-          awayTeamId,
-          awayTeamGoals,
-          inProgress,
-          homeTeam: homeTeam ? { teamName: homeTeam.teamName } : null,
-          awayTeam: awayTeam ? { teamName: awayTeam.teamName } : null,
-        };
-      });
+  async getAll(): Promise<IMatches[]> {
+    return this.model.findAll().then((teams) => teams.map((team) => team.toJSON()));
   }
 
-  async findById(ide: IMatches['id']): Promise<IMatches | null> {
-    const dbData = await this.model.findByPk(ide);
-    if (dbData == null) return null;
-
-    const
-      { id,
-        homeTeamId,
-        homeTeamGoals,
-        awayTeamId,
-        awayTeamGoals,
-        inProgress }: IMatches = dbData;
-    return { id, homeTeamId, homeTeamGoals, awayTeamId, awayTeamGoals, inProgress };
+  async getById(id: number): Promise<IMatches | null> {
+    return this.model.findByPk(id).then((team) => team?.toJSON() ?? null);
   }
 
-  async finishMatch(id: IMatches['id']): Promise<void> {
-    await this.model.update({ inProgress: false }, { where: { id } });
+  async getUnfinished(): Promise<IMatches[]> {
+    return this.model.findAll({ where: { inProgress: true } })
+      .then((teams) => teams.map((team) => team.toJSON()));
   }
 
-  async updateMatch(
-    id: IMatches['id'],
-    homeTeamGoals: IMatches['homeTeamGoals'],
-    awayTeamGoals: IMatches['awayTeamGoals'],
-  ): Promise<void> {
-    await this.model.update({ homeTeamGoals, awayTeamGoals }, { where: { id } });
+  async getFinished(): Promise<IMatches[]> {
+    return this.model.findAll({ where: { inProgress: false } })
+      .then((teams) => teams.map((team) => team.toJSON()));
   }
 
-  async createMatch(data: NewEntity<IMatches>): Promise<IMatches> {
-    const dbData = await this.model.create(data);
-    const { id, homeTeamId, homeTeamGoals, awayTeamId, awayTeamGoals, inProgress }:
-    IMatches = dbData;
-    return { id, homeTeamId, homeTeamGoals, awayTeamId, awayTeamGoals, inProgress };
+  async create(match: MatchCreate): Promise<IMatches> {
+    return this.model.create({ ...match, inProgress: true }).then((team) => team.toJSON());
   }
 
-  async getLeaderboard(): Promise<ILeaderboard[]> {
-    const leaderboard = await this.model.sequelize?.query(leaderboardQuery, { type: 'SELECT' });
-    return leaderboard as unknown as ILeaderboard[];
+  async update(match: IMatches): Promise<IMatches | null> {
+    return this.model.update(match, { where: { id: match.id } })
+      .then(() => this.getById(match.id));
   }
 }

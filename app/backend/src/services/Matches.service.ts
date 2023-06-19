@@ -1,74 +1,78 @@
-import MatchesModel from '../models/Matches.model';
 import IMatches from '../Interfaces/matches/IMatches';
-import { IMatchesModel } from '../Interfaces/matches/IMatchesModel';
-import { ServiceResponse, ServiceMessage } from '../Interfaces/ServiceResponse';
-import { NewEntity } from '../Interfaces';
-import ILeaderboard from '../Interfaces/matches/ILeaderboard';
+import MatchModel from '../models/Match.model';
+import TeamModel from '../models/Teams.model';
 
-export default class MatchesService {
-  constructor(
-    private matchesModel: IMatchesModel = new MatchesModel(),
-  ) { }
+type MatchUpdate = {
+  homeTeamGoals: number;
+  awayTeamGoals: number;
+};
 
-  public async getAllMatches(): Promise<ServiceResponse<IMatches[]>> {
-    const allMatches = await this.matchesModel.findAll();
-    return { status: 'SUCCESSFUL', data: allMatches };
-  }
+type MatchCreate = {
+  homeTeamGoals: number;
+  awayTeamGoals: number;
+  homeTeamId: number;
+  awayTeamId: number;
+};
 
-  public async getMatchesInProgress(): Promise<ServiceResponse<IMatches[]>> {
-    const allMatches = await this.matchesModel
-      .findAll();
-    const inProgressMatches = allMatches.filter((match) => match.inProgress === true);
-    return { status: 'SUCCESSFUL', data: inProgressMatches };
-  }
+export default class MatchService {
+  private matchModel = new MatchModel();
+  private teamModel = new TeamModel();
 
-  public async getMatchesNotInProgress(): Promise<ServiceResponse<IMatches[]>> {
-    const allMatches = await this.matchesModel
-      .findAll();
-    const inProgressMatches = allMatches.filter((match) => match.inProgress === false);
-    return { status: 'SUCCESSFUL', data: inProgressMatches };
-  }
-
-  public async getMatchesById(id: number): Promise<ServiceResponse<IMatches>> {
-    const match = await this.matchesModel.findById(id);
-    if (!match) return { status: 'NOT_FOUND', data: { message: `Match ${id} not found` } };
-    return { status: 'SUCCESSFUL', data: match };
-  }
-
-  public async finishMatch(id: number): Promise<ServiceResponse<ServiceMessage>> {
-    await this.matchesModel.finishMatch(id);
-    return { status: 'SUCCESSFUL', data: { message: 'Finished' } };
-  }
-
-  public async updateMatch(id: number, homeTeamGoals: number, awayTeamGoals: number):
-  Promise<ServiceResponse<ServiceMessage>> {
-    await this.matchesModel.updateMatch(id, homeTeamGoals, awayTeamGoals);
-    return { status: 'SUCCESSFUL', data: { message: 'Updated' } };
-  }
-
-  public async createMatch(match: NewEntity<IMatches>):
-  Promise<ServiceResponse<IMatches>> {
-    const { homeTeamId, awayTeamId } = match;
-    const homeTeam = await this.matchesModel.findById(homeTeamId);
-    const awayTeam = await this.matchesModel.findById(awayTeamId);
-    if (!homeTeam || !awayTeam) {
+  private async getTeamNames(matches: IMatches[]): Promise<IMatches[]> {
+    const teams = await this.teamModel.getAll();
+    return matches.map((match) => {
+      const homeTeam = teams.find((team) => team.id === match.homeTeamId);
+      const awayTeam = teams.find((team) => team.id === match.awayTeamId);
       return {
-        status: 'NOT_FOUND', data: { message: 'There is no team with such id!' },
+        ...match,
+        homeTeam: {
+          teamName: homeTeam?.teamName,
+        },
+        awayTeam: {
+          teamName: awayTeam?.teamName,
+        },
       };
-    }
-    if (homeTeamId === awayTeamId) {
-      return {
-        status: 'EQUAL_TEAMS',
-        data:
-        { message: 'It is not possible to create a match with two equal teams' },
-      };
-    }
-    const newMatch = await this.matchesModel.createMatch(match);
-    return { status: 'CREATED', data: newMatch };
+    });
   }
 
-  public async getLeaderboard(): Promise<ServiceResponse<ILeaderboard[]>> {
-    const leaderboard = await this.matchesModel.getLeaderboard();
-    return { status: 'SUCCESSFUL', data: leaderboard };
+  async getAll(): Promise<IMatches[]> {
+    const matches = await this.matchModel.getAll();
+    return this.getTeamNames(matches);
+  }
+
+  getById(id: number): Promise<IMatches | null> {
+    return this.matchModel.getById(id);
+  }
+
+  async getFinished(): Promise<IMatches[]> {
+    const matches = await this.matchModel.getFinished();
+    return this.getTeamNames(matches);
+  }
+
+  async getUnfinished(): Promise<IMatches[]> {
+    const matches = await this.matchModel.getUnfinished();
+    return this.getTeamNames(matches);
+  }
+
+  async finish(id: number): Promise<IMatches | null> {
+    const match = await this.matchModel.getById(id);
+    if (match === null) {
+      return null;
+    }
+    if (match.inProgress === false) {
+      return match;
+    }
+    const updatedMatch = await this.matchModel.update({ ...match, inProgress: false });
+    return updatedMatch;
+  }
+
+  async update(id: number, body: MatchUpdate): Promise<IMatches | null> {
+    const match = await this.matchModel.getById(id);
+    return this.matchModel.update({ ...match!, ...body });
+  }
+
+  async create(body: MatchCreate): Promise<IMatches> {
+    const match = await this.matchModel.create(body);
+    return match;
   }
 }

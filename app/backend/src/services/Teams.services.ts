@@ -1,21 +1,14 @@
-import TeamModel from '../models/Teams.model';
 import { ITeam } from '../Interfaces/teams/ITeams';
-import { ITeamModel } from '../Interfaces/teams/ITeamsModel';
-import { ServiceResponse } from '../Interfaces/ServiceResponse';
+import TeamModel from '../models/Teams.model';
 
-export default class TeamsService {
-  constructor(
-    private teamModel: ITeamModel = new TeamModel(),
-  ) { }
+export default class TeamService {
+  private teamModel = new TeamModel();
 
-  public async getAllTeams(): Promise<ServiceResponse<ITeam[]>> {
-    const allTeams = await this.teamModel.findAll();
-    return { status: 'SUCCESSFUL', data: allTeams };
+  getAll(): Promise<ITeam[]> {
+    return this.teamModel.getAll();
   }
 
-  public async getTeamById(id: number): Promise<ServiceResponse<ITeam>> {
-    const team = await this.teamModel.findById(id);
-    if (!team) return { status: 'NOT_FOUND', data: { message: `Team ${id} not found` } };
-    return { status: 'SUCCESSFUL', data: team };
+  getById(id: number): Promise<ITeam | null> {
+    return this.teamModel.getById(id);
   }
 }

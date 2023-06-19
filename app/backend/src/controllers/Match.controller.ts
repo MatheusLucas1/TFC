@@ -1,69 +1,67 @@
 import { Request, Response } from 'express';
-import MatchesService from '../services/Matches.service';
-import mapStatusHTTP from '../utils/mapStatusHTTP';
+import TeamService from '../services/Teams.services';
+import MatchService from '../services/Matches.service';
 
-export default class MatchesController {
-  constructor(
-    private matchesService = new MatchesService(),
-  ) { }
+type MatchUpdate = {
+  homeTeamGoals: number;
+  awayTeamGoals: number;
+};
 
-  public async getMatchesInProgress(req: Request, res: Response) {
-    const serviceResponse = await this.matchesService.getMatchesInProgress();
-    res.status(200).json(serviceResponse.data);
+type MatchCreate = {
+  homeTeamGoals: number;
+  awayTeamGoals: number;
+  homeTeamId: number;
+  awayTeamId: number;
+};
+
+export default class MatchController {
+  private matchService = new MatchService();
+  private teamService = new TeamService();
+
+  async getAll(req: Request, resp: Response):Promise<Response> {
+    const { inProgress } = req.query;
+    if (inProgress === undefined) {
+      const result = await this.matchService.getAll();
+      return resp.status(200).json(result);
+    }
+    if (inProgress === 'true') {
+      const result = await this.matchService.getUnfinished();
+      return resp.status(200).json(result);
+    }
+    const result = await this.matchService.getFinished();
+    return resp.status(200).json(result);
   }
 
-  public async getMatchesNotInProgress(req: Request, res: Response) {
-    const serviceResponse = await this.matchesService.getMatchesNotInProgress();
-    res.status(200).json(serviceResponse.data);
-  }
-
-  public async getAllMatches(_req: Request, res: Response) {
-    const serviceResponse = await this.matchesService.getAllMatches();
-    res.status(200).json(serviceResponse.data);
-  }
-
-  public async getMatchesById(req: Request, res: Response) {
+  async finish(req: Request, resp: Response):Promise<Response> {
     const { id } = req.params;
+    await this.matchService.finish(Number(id));
+    return resp.status(200).json({ message: 'Finished' });
+  }
 
-    const serviceResponse = await this.matchesService.getMatchesById(Number(id));
+  async update(req: Request, resp: Response):Promise<Response> {
+    const { id } = req.params;
+    const body = req.body as MatchUpdate;
+    await this.matchService.update(Number(id), body);
+    return resp.status(200).json({ message: 'Updated' });
+  }
 
-    if (serviceResponse.status !== 'SUCCESSFUL') {
-      return res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
+  async create(req: Request, resp: Response):Promise<Response> {
+    const body = req.body as MatchCreate;
+
+    if (body.homeTeamId === body.awayTeamId) {
+      return resp.status(422)
+        .json({ message: 'It is not possible to create a match with two equal teams' });
     }
 
-    res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
-  }
+    const homeTeam = await this.teamService.getById(body.homeTeamId);
+    const awayTeam = await this.teamService.getById(body.awayTeamId);
 
-  public async finishMatch(req: Request, res: Response): Promise<Response> {
-    const id = Number(req.params.id);
-    const serviceResponse = await this.matchesService.finishMatch(id);
-
-    if (serviceResponse.status !== 'SUCCESSFUL') {
-      return res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
+    if (homeTeam === null || awayTeam === null) {
+      return resp.status(404)
+        .json({ message: 'There is no team with such id!' });
     }
 
-    return res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
-  }
-
-  public async updateMatch(req: Request, res: Response): Promise<Response> {
-    const id = Number(req.params.id);
-    const { homeTeamGoals, awayTeamGoals } = req.body;
-    const serviceResponse = await this.matchesService.updateMatch(id, homeTeamGoals, awayTeamGoals);
-
-    if (serviceResponse.status !== 'SUCCESSFUL') {
-      return res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
-    }
-
-    return res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
-  }
-
-  public async createMatch(req: Request, res: Response) {
-    const serviceResponse = await this.matchesService.createMatch(req.body);
-    return res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
-  }
-
-  public async getLeaderboard(_req: Request, res: Response) {
-    const serviceResponse = await this.matchesService.getLeaderboard();
-    res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
+    const result = await this.matchService.create(body);
+    return resp.status(201).json(result);
   }
 }
