@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import TeamService from '../services/Team.services';
+import TeamService from '../services/Teams.services';
 import mapStatusHTTP from '../utils/mapStatusHTTP';
 
 export default class TeamController {
