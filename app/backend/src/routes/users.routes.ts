@@ -1,14 +1,12 @@
-import { Request, Response, Router } from 'express';
-import LoginController from '../controllers/Login.controller';
-import Validations from '../middlewares/Validations';
-
-const loginController = new LoginController();
+import { Router } from 'express';
+import LoginController from '../controllers/Users.controller';
+import validations from '../middlewares';
 
 const router = Router();
 
-router.post('/', Validations.validateLogin, (req, res) => loginController.login(req, res));
-router.get('/role', Validations.validateToken, (req: Request, res: Response) => {
-  res.status(200).json({ role: res.locals.user.role });
-});
+const loginController = new LoginController();
+
+router.post('/', validations.validateLogin, (req, resp) => loginController.login(req, resp));
+router.get('/role', validations.validateToken, (req, resp) => LoginController.role(req, resp));
 
 export default router;

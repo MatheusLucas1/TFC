@@ -1,14 +1,18 @@
 import UsersModel from '../database/models/UsersModel';
 import { IUsers } from '../Interfaces/users/IUsers';
-import { IUsersModel } from '../Interfaces/users/IUsers.model';
 
-export default class UserModel implements IUsersModel {
+export default class UserModel {
   private model = UsersModel;
 
-  async findByEmail(email: IUsers['email']): Promise<IUsers | null> {
-    const user = await this.model.findOne({ where: { email } });
-    if (!user) return null;
-    const { id, password, username, role } = user;
-    return { id, email, password, username, role };
+  async getAll(): Promise<IUsers[]> {
+    return this.model.findAll().then((teams) => teams.map((team) => team.toJSON()));
+  }
+
+  async getById(id: number): Promise<IUsers | null> {
+    return this.model.findByPk(id).then((team) => team?.toJSON() ?? null);
+  }
+
+  async getByEmail(email: string): Promise<IUsers | null> {
+    return this.model.findOne({ where: { email } }).then((team) => team?.toJSON() ?? null);
   }
 }
