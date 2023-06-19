@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import teamRouter from './teams.routes';
-import loginRouter from './users.routes';
+import loginRouter from './login.routes';
 import matchRouter from './matches.routes';
 import leaderboardRouter from './leaderboard.routes';
 

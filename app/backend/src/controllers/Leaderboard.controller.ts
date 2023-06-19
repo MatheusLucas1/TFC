@@ -1,34 +1,14 @@
 import { Request, Response } from 'express';
-import IMatches from '../Interfaces/matches/IMatches';
-import TeamService from '../services/Teams.services';
-import MatchService from '../services/Matches.service';
-import { ITeam } from '../Interfaces/teams/ITeams';
-
-// type ScoreboardType = {
-//   name: string,
-//   totalPoints: number,
-//   totalGames: number,
-//   totalVictories: number,
-//   totalDraws: number,
-//   totalLosses: number,
-//   goalsFavor: number,
-//   goalsOwn: number,
-//   goalsBalance: number,
-//   efficiency: string,
-// };
-
-// type MatchCreate = {
-//   homeTeamGoals: number;
-//   awayTeamGoals: number;
-//   homeTeamId: number;
-//   awayTeamId: number;
-// };
+import { IMatch } from '../Interfaces/IMatch';
+import TeamService from '../services/Team.services';
+import MatchService from '../services/Match.service';
+import { ITeam } from '../Interfaces/ITeam';
 
 export default class LeaderboardController {
   private matchService = new MatchService();
   private teamService = new TeamService();
 
-  static countVictoriesHome(matches: IMatches[], teamId: number): number {
+  static countVictoriesHome(matches: IMatch[], teamId: number): number {
     return matches
       .filter(
         (match) => (match.homeTeamId === teamId && match.homeTeamGoals > match.awayTeamGoals),
@@ -36,14 +16,14 @@ export default class LeaderboardController {
       .length;
   }
 
-  static countVictoriesAway(matches: IMatches[], teamId: number): number {
+  static countVictoriesAway(matches: IMatch[], teamId: number): number {
     return matches
       .filter(
         (match) => (match.awayTeamId === teamId && match.awayTeamGoals > match.homeTeamGoals),
       ).length;
   }
 
-  static countDrawsHome(matches: IMatches[], teamId: number): number {
+  static countDrawsHome(matches: IMatch[], teamId: number): number {
     return matches
       .filter(
         (match) => ((match.homeTeamId === teamId)
@@ -51,7 +31,7 @@ export default class LeaderboardController {
       ).length;
   }
 
-  static countDrawsAway(matches: IMatches[], teamId: number): number {
+  static countDrawsAway(matches: IMatch[], teamId: number): number {
     return matches
       .filter(
         (match) => ((match.awayTeamId === teamId)
@@ -59,31 +39,31 @@ export default class LeaderboardController {
       ).length;
   }
 
-  static countGoalsFavorHome(matches: IMatches[], teamId: number): number {
+  static countGoalsFavorHome(matches: IMatch[], teamId: number): number {
     return matches
       .filter((match) => match.homeTeamId === teamId)
       .reduce((acc, curr) => acc + curr.homeTeamGoals, 0);
   }
 
-  static countGoalsFavorAway(matches: IMatches[], teamId: number): number {
+  static countGoalsFavorAway(matches: IMatch[], teamId: number): number {
     return matches
       .filter((match) => match.awayTeamId === teamId)
       .reduce((acc, curr) => acc + curr.awayTeamGoals, 0);
   }
 
-  static countGoalsOwnHome(matches: IMatches[], teamId: number): number {
+  static countGoalsOwnHome(matches: IMatch[], teamId: number): number {
     return matches
       .filter((match) => match.homeTeamId === teamId)
       .reduce((acc, curr) => acc + curr.awayTeamGoals, 0);
   }
 
-  static countGoalsOwnAway(matches: IMatches[], teamId: number): number {
+  static countGoalsOwnAway(matches: IMatch[], teamId: number): number {
     return matches
       .filter((match) => match.awayTeamId === teamId)
       .reduce((acc, curr) => acc + curr.homeTeamGoals, 0);
   }
 
-  static countScoreBoardHome = (matches: IMatches[], teams: ITeam[]) => teams.map((team) => {
+  static countScoreBoardHome = (matches: IMatch[], teams: ITeam[]) => teams.map((team) => {
     const teamMatches = matches.filter((match) => match.homeTeamId === team.id);
     const totalVictories = LeaderboardController.countVictoriesHome(teamMatches, team.id);
     const totalDraws = LeaderboardController.countDrawsHome(teamMatches, team.id);
@@ -103,7 +83,7 @@ export default class LeaderboardController {
     };
   });
 
-  static countScoreBoardAway = (matches: IMatches[], teams: ITeam[]) => teams.map((team) => {
+  static countScoreBoardAway = (matches: IMatch[], teams: ITeam[]) => teams.map((team) => {
     const teamMatches = matches.filter((match) => match.awayTeamId === team.id);
     const totalVictories = LeaderboardController.countVictoriesAway(teamMatches, team.id);
     const totalDraws = LeaderboardController.countDrawsAway(teamMatches, team.id);

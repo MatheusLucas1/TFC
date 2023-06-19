@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import TeamService from '../services/Teams.services';
-import MatchService from '../services/Matches.service';
+import TeamService from '../services/Team.services';
+import MatchService from '../services/Match.service';
 
 type MatchUpdate = {
   homeTeamGoals: number;

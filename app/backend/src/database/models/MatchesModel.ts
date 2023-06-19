@@ -1,67 +1,78 @@
 import {
   DataTypes,
   Model,
-  InferCreationAttributes,
   InferAttributes,
+  InferCreationAttributes,
   CreationOptional,
 } from 'sequelize';
 import db from '.';
-import Teams from './TeamsModel';
+import SequelizeTeam from './TeamsModel';
 
-class Matches extends Model<InferAttributes<Matches>, InferCreationAttributes<Matches>> {
-  declare id:CreationOptional<number>;
-
+class SequelizeMatch extends Model<InferAttributes<SequelizeMatch>,
+InferCreationAttributes<SequelizeMatch>> {
+  declare id: CreationOptional<number>;
   declare homeTeamId: number;
-
   declare homeTeamGoals: number;
-
   declare awayTeamId: number;
-
   declare awayTeamGoals: number;
-
   declare inProgress: boolean;
 }
 
-Matches.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    homeTeamId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    homeTeamGoals: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    awayTeamId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    awayTeamGoals: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    inProgress: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
+SequelizeMatch.init({
+  id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  homeTeamId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'home_team_id',
+    references: {
+      model: 'teams',
+      key: 'id',
     },
   },
-
-  {
-    modelName: 'matches',
-    underscored: true,
-    timestamps: false,
-    sequelize: db,
+  homeTeamGoals: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'home_team_goals',
   },
-);
+  awayTeamId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'away_team_id',
+    references: {
+      model: 'teams',
+      key: 'id',
+    },
+  },
+  awayTeamGoals: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'away_team_goals',
+  },
+  inProgress: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'in_progress',
+  },
+}, {
+  sequelize: db,
+  modelName: 'matches',
+  timestamps: false,
+  underscored: true,
+  tableName: 'matches',
+});
 
-Matches.belongsTo(Teams, { foreignKey: 'homeTeamId', as: 'homeTeam' });
-Matches.belongsTo(Teams, { foreignKey: 'awayTeamId', as: 'awayTeam' });
+SequelizeMatch.belongsTo(SequelizeTeam, {
+  foreignKey: 'homeTeamId',
+});
 
-export default Matches;
+SequelizeMatch.belongsTo(SequelizeTeam, {
+  foreignKey: 'awayTeamId',
+});
+
+export default SequelizeMatch;

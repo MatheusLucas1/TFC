@@ -1,5 +1,5 @@
-import { ITeam } from '../Interfaces/teams/ITeams';
-import TeamModel from '../models/Teams.model';
+import { ITeam } from '../Interfaces/ITeam';
+import TeamModel from '../models/Team.model';
 
 export default class TeamService {
   private teamModel = new TeamModel();

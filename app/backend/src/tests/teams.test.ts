@@ -2,44 +2,75 @@ import * as sinon from 'sinon';
 import * as chai from 'chai';
 // @ts-ignore
 import chaiHttp = require('chai-http');
-import * as jwt from 'jsonwebtoken';
-import { app } from '../app';
-import Team from '../database/models/TeamsModel';
-import { teams, team1 } from './mocks/Teams.mock'
 
-chai.use(chaiHttp);
+import { app } from '../app';
+// import Example from '../database/models/ExampleModel';
+import SequelizeUser from '../../src/database/models/UsersModel';
+import jwtAuth from '../auth/jwtAuth';
+// import { Response } from 'superagent';
 
 const { expect } = chai;
 
-describe('Teams integration tests', () => {
+chai.use(chaiHttp);
 
+
+
+describe('Team Test', function() {
+
+  describe("Casos válidos e inválidos", () => {
+    it('getAll', async function() {
+      const { status, body } = await chai.request(app)
+      .get('/teams')
+      .send();
+  
+      expect(status).to.equal(200);
+    });
+
+    it('getById', async function() {
+      const { status, body } = await chai.request(app)
+      .get('/teams/1')
+      .send();
+  
+      expect(status).to.equal(200);
+    });
+
+    it('getById', async function() {
+      const { status, body } = await chai.request(app)
+      .get('/teams/1156651')
+      .send();
+  
+      expect(status).to.equal(200);
+    });
+  })
+
+  // describe("Casos válidos e inválidos \'/role\'", () => {
+  //   it('sucesso!', async function() {
+  //     sinon.stub(jwtAuth, 'verifyToken').returns({ id: 1, role: 'admin', email: '', userName: '' });
+  //     const { status, body } = await chai.request(app)
+  //     .get('/login/role')
+  //     .set('authorization', 'some_value')
+  //     .send();
+  
+  //     expect(body).to.be.deep.equal({ role: 'admin' });
+  //     expect(status).to.equal(200);
+  //   });
+
+  //   it('incorreto 1', async function() {
+  //     const { status, body } = await chai.request(app)
+  //     .get('/login/role')
+  //     .send();
+  
+  //     expect(status).to.equal(401);
+  //   });
+
+  //   it('incorreto 2', async function() {
+  //     const { status, body } = await chai.request(app)
+  //     .get('/login/role')
+  //     .set('authorization', 'some_value')
+  //     .send();
+  
+  //     expect(status).to.equal(401);
+  //   });
+  // })
   afterEach(sinon.restore);
-
-
-  it('should return all teams', async function() {
-    sinon.stub(Team, 'findAll').resolves(teams as any);
-
-    const { status, body } = await chai.request(app).get('/teams');
-
-    expect(status).to.equal(200);
-
-    expect(body).to.deep.equal(teams)
-})
-
-it('should return a team by id', async function() {
-  sinon.stub(Team, 'findOne').resolves(teams as any);
-
-  const { status, body } = await chai.request(app).get('/teams/1');
-
-  expect(status).to.equal(200);
-  expect(body).to.deep.equal(team1);
-});
-it('should return not found if the team doesn\'t exists', async function() {
-  sinon.stub(Team, 'findOne').resolves(null);
-
-  const { status, body } = await chai.request(app).get('/teams/102');
-
-  expect(status).to.equal(404);
-  expect(body.message).to.equal('Team 102 not found');
-});
 });

@@ -1,11 +1,12 @@
-import { Request, Router, Response } from 'express';
+import { Router } from 'express';
 import TeamController from '../controllers/Teams.controller';
-
-const teamController = new TeamController();
 
 const router = Router();
 
-router.get('/', (req: Request, res: Response) => teamController.getAllTeams(req, res));
-router.get('/:id', (req: Request, res: Response) => teamController.getBookById(req, res));
+const teamController = new TeamController();
+
+router.get('/', (req, resp) => teamController.getAll(req, resp));
+
+router.get('/:id', (req, resp) => teamController.getById(req, resp));
 
 export default router;

@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import * as bcrypt from 'bcryptjs';
+import UserService from '../services/User.service';
 import jwtAuth from '../auth/jwtAuth';
-import UsersService from '../services/Users.service';
 
 export default class LoginController {
-  private userService = new UsersService();
+  private userService = new UserService();
 
   async login(req: Request, resp: Response):Promise<Response | void> {
     const { email, password } = req.body;

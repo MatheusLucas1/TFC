@@ -1,40 +1,31 @@
-import { Request, Router, Response } from 'express';
-import MatchesController from '../controllers/Match.controller';
-import Validations from '../middlewares/Validations';
-
-const matchesController = new MatchesController();
+import { Router } from 'express';
+import MatchController from '../controllers/Match.controller';
+import validations from '../middlewares';
 
 const router = Router();
 
-// router.get('/', (req: Request, res: Response) => matchesController.getAllMatches(req, res));
+const matchController = new MatchController();
 
-router.post('/', Validations.validateToken, (req: Request, res: Response) => {
-  matchesController.createMatch(req, res);
-});
+router.get('/', (req, resp) => matchController.getAll(req, resp));
 
-router.get('/', (req: Request, res: Response) => {
-  if (req.query.inProgress === 'true') {
-    matchesController.getMatchesInProgress(req, res);
-  } else if (req.query.inProgress === 'false') {
-    matchesController.getMatchesNotInProgress(req, res);
-  } else {
-    matchesController.getAllMatches(req, res);
-  }
-});
+router.patch(
+  '/:id/finish',
+  validations.validateToken,
+  (req, resp) => matchController.finish(req, resp),
+);
 
 router.patch(
   '/:id',
-  Validations.validateToken,
-  (req: Request, res: Response) =>
-    matchesController.updateMatch(req, res),
-);
-router.patch(
-  '/:id/finish',
-  Validations.validateToken,
-  (req: Request, res: Response) =>
-    matchesController.finishMatch(req, res),
+  validations.validateToken,
+  validations.validateMatch.validateUpdate,
+  (req, resp) => matchController.update(req, resp),
 );
 
-router.get('/:id', (req: Request, res: Response) => matchesController.getMatchesById(req, res));
+router.post(
+  '/',
+  validations.validateToken,
+  validations.validateMatch.validateCreate,
+  (req, resp) => matchController.create(req, resp),
+);
 
 export default router;
