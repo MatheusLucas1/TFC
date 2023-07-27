@@ -53,10 +53,6 @@ $ npm run dev
 # O servidor inciará na porta:3001 - acesse http://localhost:3001
 ```
 
-## Documentação
-
-A documentação da API foi feita utilizando o Swagger, para acessá-la basta acessar a rota http://localhost:3001/docs.
-
 ## Autor
 
 - [Matheus Lucas](https://github.com/MatheusLucas1)
